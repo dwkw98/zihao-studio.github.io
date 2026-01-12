@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>9格华容道 - 排行榜版</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: 'Microsoft YaHei', Arial, sans-serif;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			min-height: 100vh;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			padding: 20px;
+		}
+
+		.container {
+			background: white;
+			border-radius: 20px;
+			box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+			padding: 30px;
+			max-width: 1200px;
+			width: 100%;
+		}
+
+		h1 {
+			text-align: center;
+			color: #333;
+			margin-bottom: 30px;
+			font-size: 2.5em;
+		}
+
+		.game-wrapper {
+			display: flex;
+			gap: 40px;
+			flex-wrap: wrap;
+			justify-content: center;
+		}
+
+		.game-area {
+			flex: 1;
+			min-width: 300px;
+			max-width: 500px;
+		}
+
+		.puzzle-board {
+			width: 100%;
+			max-width: 400px;
+			margin: 0 auto 20px;
+			position: relative;
+			background: #f0f0f0;
+			border-radius: 10px;
+			padding: 10px;
+			box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+		}
+
+		.puzzle-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 5px;
+			aspect-ratio: 1;
+		}
+
+		.tile {
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			color: white;
+			font-size: 2em;
+			font-weight: bold;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			border-radius: 10px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+			user-select: none;
+		}
+
+		.tile:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+		}
+
+		.tile.empty {
+			background: transparent;
+			box-shadow: none;
+			cursor: default;
+		}
+
+		.tile.empty:hover {
+			transform: none;
+		}
+
+		.controls {
+			text-align: center;
+			margin-bottom: 20px;
+		}
+
+		.timer {
+			font-size: 1.5em;
+			font-weight: bold;
+			color: #333;
+			margin-bottom: 15px;
+			text-align: center;
+		}
+
+		.btn {
+			background: #667eea;
+			color: white;
+			border: none;
+			padding: 12px 30px;
+			font-size: 1.1em;
+			border-radius: 25px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			margin: 0 10px;
+			box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+		}
+
+		.btn:hover {
+			background: #764ba2;
+			transform: translateY(-2px);
+			box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+		}
+
+		.btn:disabled {
+			background: #ccc;
+			cursor: not-allowed;
+			transform: none;
+		}
+
+		.leaderboard {
+			flex: 1;
+			min-width: 300px;
+			max-width: 400px;
+			background: #f8f9fa;
+			border-radius: 15px;
+			padding: 25px;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+		}
+
+		.leaderboard h2 {
+			color: #333;
+			margin-bottom: 20px;
+			text-align: center;
+			font-size: 1.8em;
+		}
+
+		.leaderboard-list {
+			list-style: none;
+		}
+
+		.leaderboard-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 12px;
+			margin-bottom: 10px;
+			background: white;
+			border-radius: 10px;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+			transition: all 0.3s ease;
+		}
+
+		.leaderboard-item:hover {
+			transform: translateX(5px);
+		}
+
+		.rank {
+			font-size: 1.2em;
+			font-weight: bold;
+			width: 30px;
+		}
+
+		.rank-1 { color: #ffd700; }
+		.rank-2 { color: #c0c0c0; }
+		.rank-3 { color: #cd7f32; }
+
+		.player-name {
+			flex: 1;
+			font-weight: 500;
+			color: #333;
+		}
+
+		.player-time {
+			font-weight: bold;
+			color: #667eea;
+		}
+
+		.player-date {
+			font-size: 0.8em;
+			color: #999;
+		}
+
+		.modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0,0,0,0.5);
+			z-index: 1000;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.modal-content {
+			background: white;
+			padding: 30px;
+			border-radius: 15px;
+			text-align: center;
+			max-width: 400px;
+			width: 90%;
+			box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+		}
+
+		.modal h3 {
+			margin-bottom: 20px;
+			color: #333;
+		}
+
+		.modal input {
+			width: 100%;
+			padding: 12px;
+			font-size: 1.1em;
+			border: 2px solid #ddd;
+			border-radius: 8px;
+			margin-bottom: 20px;
+			transition: border-color 0.3s ease;
+		}
+
+		.modal input:focus {
+			outline: none;
+			border-color: #667eea;
+		}
+
+		.victory-message {
+			background: linear-gradient(135deg, #4caf50, #45a049);
+			color: white;
+			padding: 20px;
+			border-radius: 10px;
+			margin-bottom: 20px;
+			text-align: center;
+			font-size: 1.2em;
+			display: none;
+		}
+
+		.current-player {
+			background: #e3f2fd;
+			padding: 15px;
+			border-radius: 10px;
+			margin-bottom: 20px;
+			text-align: center;
+			border-left: 5px solid #2196f3;
+		}
+
+		.current-player .label {
+			font-weight: bold;
+			color: #2196f3;
+			margin-bottom: 5px;
+		}
+
+		@media (max-width: 768px) {
+			.game-wrapper {
+				flex-direction: column;
+			}
+			
+			.tile {
+				font-size: 1.5em;
+			}
+			
+			h1 {
+				font-size: 2em;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>🔮 9格华容道</h1>
+		
+		<div class="current-player" id="currentPlayerInfo" style="display: none;">
+			<div class="label">当前玩家</div>
+			<div id="playerNameDisplay"></div>
+		</div>
+
+		<div class="victory-message" id="victoryMessage">
+			🎉 恭喜完成！用时 <span id="finalTime"></span> 🎉
+		</div>
+
+		<div class="game-wrapper">
+			<div class="game-area">
+				<div class="timer" id="timer">时间: 00:00</div>
+				
+				<div class="puzzle-board">
+					<div class="puzzle-grid" id="puzzleGrid"></div>
+				</div>
+				
+				<div class="controls">
+					<button class="btn" id="shuffleBtn" onclick="shufflePuzzle()">打乱重排</button>
+					<button class="btn" id="resetBtn" onclick="resetPuzzle()">重新开始</button>
+				</div>
+			</div>
+			
+			<div class="leaderboard">
+				<h2>🏆 排行榜</h2>
+				<ul class="leaderboard-list" id="leaderboardList">
+					<li style="text-align: center; color: #999; padding: 20px;">
+						暂无记录，快来创造第一个记录吧！
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<!-- 玩家名称输入模态框 -->
+	<div class="modal" id="nameModal">
+		<div class="modal-content">
+			<h3>欢迎！请输入你的大名</h3>
+			<p style="color: #666; margin-bottom: 20px; font-size: 0.9em;">
+				你的成绩将被记录到排行榜中
+			</p>
+			<input type="text" id="playerNameInput" placeholder="输入你的名称..." maxlength="20">
+			<button class="btn" onclick="savePlayerName()">开始游戏</button>
+		</div>
+	</div>
+
+	<script>
+		// 游戏状态
+		let tiles = [];
+		let emptyPos = 8;
+		let isPlaying = false;
+		let startTime = null;
+		let timerInterval = null;
+		let playerName = localStorage.getItem('puzzlePlayerName');
+		let leaderboard = JSON.parse(localStorage.getItem('puzzleLeaderboard') || '[]');
+
+		// 初始化
+		window.onload = function() {
+			initPuzzle();
+			renderLeaderboard();
+			
+			// 检查是否需要输入玩家名称
+			if (!playerName) {
+				document.getElementById('nameModal').style.display = 'flex';
+				document.getElementById('playerNameInput').focus();
+			} else {
+				showPlayerInfo();
+			}
+		};
+
+		// 初始化拼图
+		function initPuzzle() {
+			tiles = [1, 2, 3, 4, 5, 6, 7, 8, ''];
+			emptyPos = 8;
+			renderPuzzle();
+		}
+
+		// 渲染拼图
+		function renderPuzzle() {
+			const grid = document.getElementById('puzzleGrid');
+			grid.innerHTML = '';
+			
+			tiles.forEach((tile, index) => {
+				const tileElement = document.createElement('div');
+				tileElement.className = tile === '' ? 'tile empty' : 'tile';
+				tileElement.textContent = tile;
+				tileElement.onclick = () => moveTile(index);
+				grid.appendChild(tileElement);
+			});
+		}
+
+		// 移动方块
+		function moveTile(index) {
+			if (!isPlaying) return;
+			
+			const row = Math.floor(index / 3);
+			const col = index % 3;
+			const emptyRow = Math.floor(emptyPos / 3);
+			const emptyCol = emptyPos % 3;
+			
+			// 检查是否相邻
+			const isAdjacent = (Math.abs(row - emptyRow) === 1 && col === emptyCol) ||
+							 (Math.abs(col - emptyCol) === 1 && row === emptyRow);
+			
+			if (isAdjacent) {
+				// 交换位置
+				[tiles[index], tiles[emptyPos]] = [tiles[emptyPos], tiles[index]];
+				emptyPos = index;
+				renderPuzzle();
+				
+				// 检查是否获胜
+				if (checkWin()) {
+					handleWin();
+				}
+			}
+		}
+
+		// 检查是否获胜
+		function checkWin() {
+			for (let i = 0; i < 8; i++) {
+				if (tiles[i] !== i + 1) return false;
+			}
+			return tiles[8] === '';
+		}
+
+		// 打乱拼图（确保可解）
+		function shufflePuzzle() {
+			// 生成可解的打乱状态
+			do {
+				tiles = [1, 2, 3, 4, 5, 6, 7, 8, ''];
+				emptyPos = 8;
+				
+				// 进行1000次随机移动确保可解
+				for (let i = 0; i < 1000; i++) {
+					const possibleMoves = getPossibleMoves();
+					const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+					[tiles[randomMove], tiles[emptyPos]] = [tiles[emptyPos], tiles[randomMove]];
+					emptyPos = randomMove;
+				}
+			} while (checkWin()); // 确保打乱的拼图不是已解决状态
+			
+			renderPuzzle();
+			startTimer();
+		}
+
+		// 获取可移动的位置
+		function getPossibleMoves() {
+			const moves = [];
+			const row = Math.floor(emptyPos / 3);
+			const col = emptyPos % 3;
+			
+			if (row > 0) moves.push(emptyPos - 3); // 上
+			if (row < 2) moves.push(emptyPos + 3); // 下
+			if (col > 0) moves.push(emptyPos - 1); // 左
+			if (col < 2) moves.push(emptyPos + 1); // 右
+			
+			return moves;
+		}
+
+		// 开始计时
+		function startTimer() {
+			if (timerInterval) clearInterval(timerInterval);
+			startTime = Date.now();
+			isPlaying = true;
+			document.getElementById('victoryMessage').style.display = 'none';
+			
+			timerInterval = setInterval(() => {
+				const elapsed = Math.floor((Date.now() - startTime) / 1000);
+				const minutes = Math.floor(elapsed / 60);
+				const seconds = elapsed % 60;
+				document.getElementById('timer').textContent = 
+					`时间: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+			}, 100);
+			
+			document.getElementById('shuffleBtn').disabled = true;
+		}
+
+		// 处理获胜
+		function handleWin() {
+			clearInterval(timerInterval);
+			isPlaying = false;
+			const elapsed = Math.floor((Date.now() - startTime) / 1000);
+			const minutes = Math.floor(elapsed / 60);
+			const seconds = elapsed % 60;
+			const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+			
+			document.getElementById('finalTime').textContent = timeStr;
+			document.getElementById('victoryMessage').style.display = 'block';
+			document.getElementById('shuffleBtn').disabled = false;
+			
+			// 保存成绩
+			if (playerName) {
+				saveScore(playerName, elapsed);
+			}
+		}
+
+		// 重置拼图
+		function resetPuzzle() {
+			clearInterval(timerInterval);
+			isPlaying = false;
+			document.getElementById('timer').textContent = '时间: 00:00';
+			document.getElementById('victoryMessage').style.display = 'none';
+			document.getElementById('shuffleBtn').disabled = false;
+			initPuzzle();
+		}
+
+		// 保存玩家名称
+		function savePlayerName() {
+			const name = document.getElementById('playerNameInput').value.trim();
+			if (name && name.length > 0) {
+				playerName = name;
+				localStorage.setItem('puzzlePlayerName', playerName);
+				document.getElementById('nameModal').style.display = 'none';
+				showPlayerInfo();
+			} else {
+				alert('请输入有效的名称！');
+			}
+		}
+
+		// 显示玩家信息
+		function showPlayerInfo() {
+			const info = document.getElementById('currentPlayerInfo');
+			info.style.display = 'block';
+			document.getElementById('playerNameDisplay').textContent = playerName;
+		}
+
+		// 保存成绩
+		function saveScore(name, time) {
+			const score = {
+				name: name,
+				time: time,
+				date: new Date().toISOString()
+			};
+			
+			leaderboard.push(score);
+			leaderboard.sort((a, b) => a.time - b.time);
+			leaderboard = leaderboard.slice(0, 50); // 只保留前50名
+			
+			localStorage.setItem('puzzleLeaderboard', JSON.stringify(leaderboard));
+			renderLeaderboard();
+		}
+
+		// 渲染排行榜
+		function renderLeaderboard() {
+			const list = document.getElementById('leaderboardList');
+			list.innerHTML = '';
+			
+			if (leaderboard.length === 0) {
+				list.innerHTML = '<li style="text-align: center; color: #999; padding: 20px;">暂无记录，快来创造第一个记录吧！</li>';
+				return;
+			}
+			
+			leaderboard.slice(0, 10).forEach((score, index) => {
+				const item = document.createElement('li');
+				item.className = 'leaderboard-item';
+				const rankClass = index < 3 ? `rank-${index + 1}` : '';
+				const date = new Date(score.date).toLocaleDateString('zh-CN');
+				const minutes = Math.floor(score.time / 60);
+				const seconds = score.time % 60;
+				const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+				
+				item.innerHTML = `
+					<span class="rank ${rankClass}">${index + 1}</span>
+					<div class="player-name">
+						${score.name}
+						<div class="player-date">${date}</div>
+					</div>
+					<div class="player-time">${timeStr}</div>
+				`;
+				
+				list.appendChild(item);
+			});
+		}
+
+		// 回车键保存名称
+		document.getElementById('playerNameInput').addEventListener('keypress', function(e) {
+			if (e.key === 'Enter') {
+				savePlayerName();
+			}
+		});
+	</script>
+</body>
+</html>
+				
